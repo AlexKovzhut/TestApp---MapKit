@@ -49,4 +49,13 @@ extension MKMapView {
     }
 }
 
-extension ViewController: MPKIt
+extension ViewController: MKMapViewDelegate {
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        guard let annotation = annotation as? Places else { return }
+        
+        let identifier = "places"
+        let view: MKMarkerAnnotationView
+        
+        
+    }
+}
