@@ -7,6 +7,7 @@
 
 import Foundation
 import MapKit
+import <#module#>
 
 class Places: NSObject, MKAnnotation {
     let title: String?

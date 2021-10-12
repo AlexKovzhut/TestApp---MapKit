@@ -51,11 +51,21 @@ extension MKMapView {
 
 extension ViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        guard let annotation = annotation as? Places else { return }
+        guard let annotation = annotation as? Places else { return nil}
         
         let identifier = "places"
         let view: MKMarkerAnnotationView
         
+        if let dequeuedView = MapView.dequeueReusableAnnotationView(withIdentifier: "places") as? MKMarkerAnnotationView {
+            dequeuedView.annotation = annotation
+            view = dequeuedView
+        } else {
+            view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+            view.canShowCallout = true
+            view.calloutOffset = CGPoint(x: -5, y: 5)
+            view.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
+        }
         
+        return view
     }
 }
