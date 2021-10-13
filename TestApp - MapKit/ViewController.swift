@@ -12,6 +12,8 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var MapView: MKMapView!
     
+    var places: [Places] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -38,6 +40,22 @@ class ViewController: UIViewController {
         
         MapView.addAnnotation(place)
     }
+    
+    func loadInitalData() {
+        guard let fileName = Bundle.main.url(forResource: "Places", withExtension: "Geojson"), let placesData = try? Data(contentsOf: fileName) else {
+            return
+        }
+        
+        do {
+            let features = try MKGeoJSONDecoder() .decode(placesData).compactMap( $0 as? MKGeoJSONFeature)
+            
+            let validWorks = features.compactMap(Places.init)
+            places.append(contentsOf: validWorks)
+        } catch {
+            print(error)
+        }
+    }
+    
 }
 
 extension MKMapView {
@@ -53,10 +71,10 @@ extension ViewController: MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         guard let annotation = annotation as? Places else { return nil}
         
-        let identifier = "places"
+        let identifier = "place"
         let view: MKMarkerAnnotationView
         
-        if let dequeuedView = MapView.dequeueReusableAnnotationView(withIdentifier: "places") as? MKMarkerAnnotationView {
+        if let dequeuedView = MapView.dequeueReusableAnnotationView(withIdentifier: "place") as? MKMarkerAnnotationView {
             dequeuedView.annotation = annotation
             view = dequeuedView
         } else {
@@ -67,5 +85,15 @@ extension ViewController: MKMapViewDelegate {
         }
         
         return view
+    }
+    
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        guard let places = view.annotation as? Places else {
+            return
+        }
+        
+        let launchOption = [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]
+        
+        places.mapItem?.openInMaps(launchOptions: launchOption)
     }
 }
