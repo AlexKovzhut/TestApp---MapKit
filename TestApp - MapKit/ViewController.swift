@@ -7,93 +7,113 @@
 
 import UIKit
 import MapKit
+import CoreLocation
 
 class ViewController: UIViewController {
-
-    @IBOutlet weak var MapView: MKMapView!
     
-    var places: [Places] = []
+    //Создаем карту
+    let mapView: MKMapView = {
+        let mapView = MKMapView()
+        mapView.translatesAutoresizingMaskIntoConstraints = false //Чтобы autolayout не транслировал автоизменение размера(autoresizing masks) в констрейнты
+        return mapView
+    } ()
     
+    //Создаем кнопки
+    let addAdressButton: UIButton = {
+        let button = UIButton()
+        
+        button.setTitle("Add", for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = UIColor.systemOrange
+        button.tintColor = UIColor.white
+        
+        return button
+    }()
+    
+    let routeAdressButton: UIButton = {
+        let button = UIButton()
+        
+        button.setTitle("Route", for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true
+        button.backgroundColor = UIColor.systemOrange
+        button.tintColor = UIColor.white
+                
+        return button
+    }()
+    
+    let clearAdressButton: UIButton = {
+        let button = UIButton()
+        
+        button.setTitle("Clear", for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true
+        button.backgroundColor = UIColor.systemOrange
+        button.tintColor = UIColor.white
+        
+        return button
+    }()
+        
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let initialLocation = CLLocation(latitude: 55.751244, longitude: 37.618423)
+        setConstraints()
         
-        MapView.centerLocation(initialLocation)
-        
-        let cameraCenter = CLLocation(latitude: 55.751244, longitude: 37.618423)
-        let region = MKCoordinateRegion(center: cameraCenter.coordinate, latitudinalMeters: 5000, longitudinalMeters: 5000)
-        MapView.setCameraBoundary(MKMapView.CameraBoundary(coordinateRegion: region), animated: true)
-        
-        let zoomRage = MKMapView.CameraZoomRange(maxCenterCoordinateDistance: 25_000)
-        MapView.setCameraZoomRange(zoomRage, animated: true)
-        
-        let place = Places(
-            title: "Red Square",
-            location: "Moscow",
-            category: "Squares",
-            coordinate: CLLocationCoordinate2D(
-                latitude: 55.754093,
-                longitude: 37.620407
-            )
-        )
-        
-        MapView.addAnnotation(place)
+        addAdressButton.addTarget(self, action: #selector(addAdressButtonTapped), for: .touchUpInside)
+        routeAdressButton.addTarget(self, action: #selector(routeAdressButtonTapped), for: .touchUpInside)
+        clearAdressButton.addTarget(self, action: #selector(clearAdressButtonTapped), for: .touchUpInside)
     }
     
-    func loadInitalData() {
-        guard let fileName = Bundle.main.url(forResource: "Places", withExtension: "Geojson"), let placesData = try? Data(contentsOf: fileName) else {
-            return
-        }
-        
-        do {
-            let features = try MKGeoJSONDecoder() .decode(placesData).compactMap( $0 as? MKGeoJSONFeature)
-            
-            let validWorks = features.compactMap(Places.init)
-            places.append(contentsOf: validWorks)
-        } catch {
-            print(error)
+    //Метод для отработки алерта добваления адреса
+    @objc func addAdressButtonTapped() {
+        alertAddAdress(title: "Add address", placeholder: "Enter address") { (text) in
+            print(text)
         }
     }
     
-}
-
-extension MKMapView {
-    // метод определяющий локацию в радиусе 1 км
-    func centerLocation(_ location: CLLocation, regionRadius: CLLocationDistance = 500) {
-        let coordinateRegion = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
+    @objc func routeAdressButtonTapped() {
         
-        setRegion(coordinateRegion, animated: true)
+    }
+    
+    @objc func clearAdressButtonTapped() {
+        
     }
 }
 
-extension ViewController: MKMapViewDelegate {
-    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        guard let annotation = annotation as? Places else { return nil}
-        
-        let identifier = "place"
-        let view: MKMarkerAnnotationView
-        
-        if let dequeuedView = MapView.dequeueReusableAnnotationView(withIdentifier: "place") as? MKMarkerAnnotationView {
-            dequeuedView.annotation = annotation
-            view = dequeuedView
-        } else {
-            view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
-            view.canShowCallout = true
-            view.calloutOffset = CGPoint(x: -5, y: 5)
-            view.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
-        }
-        
-        return view
-    }
+extension ViewController {
     
-    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
-        guard let places = view.annotation as? Places else {
-            return
-        }
+    //Распологаем элементы на view и присваиваем ограничения
+    func setConstraints() {
+        view.addSubview(mapView)
+        NSLayoutConstraint.activate([
+            mapView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0),
+            mapView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
+            mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
+            mapView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
+        ])
         
-        let launchOption = [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]
+        mapView.addSubview(addAdressButton)
+        NSLayoutConstraint.activate([
+            addAdressButton.topAnchor.constraint(equalTo: mapView.topAnchor, constant: 50),
+            addAdressButton.trailingAnchor.constraint(equalTo: mapView.trailingAnchor, constant: -15),
+            addAdressButton.heightAnchor.constraint(equalToConstant: 50),
+            addAdressButton.widthAnchor.constraint(equalToConstant: 70)
+        ])
         
-        places.mapItem?.openInMaps(launchOptions: launchOption)
+        mapView.addSubview(routeAdressButton)
+        NSLayoutConstraint.activate([
+            routeAdressButton.topAnchor.constraint(equalTo: mapView.topAnchor, constant: 120),
+            routeAdressButton.trailingAnchor.constraint(equalTo: mapView.trailingAnchor, constant: -15),
+            routeAdressButton.heightAnchor.constraint(equalToConstant: 40),
+            routeAdressButton.widthAnchor.constraint(equalToConstant: 60)
+        ])
+        
+        mapView.addSubview(clearAdressButton)
+        NSLayoutConstraint.activate([
+            clearAdressButton.topAnchor.constraint(equalTo: mapView.topAnchor, constant: 190),
+            clearAdressButton.trailingAnchor.constraint(equalTo: mapView.trailingAnchor, constant: -15),
+            clearAdressButton.heightAnchor.constraint(equalToConstant: 40),
+            clearAdressButton.widthAnchor.constraint(equalToConstant: 60)
+        ])
     }
 }
